@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "financial-data-service"
+version = "0.1.0"
+description = "A high-performance financial data service using FastAPI."
+authors = ["Nicolas Markos <nicolas.markos@gmail.com>"]
+packages = [
+    { include = "src" },
+    { include = "scripts" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+fastapi = "^0.115.8"
+uvicorn = "^0.34.0"
+pydantic = "^2.10.6"
+httpx = "^0.28.1"
+numpy = "^2.2.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+ruff = "^0.9.7"  # Ensure you have the correct version
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+# Enable isort rules
+select = ["E", "F", "I"]  # E and F are Python errors, I is import sorting
+
+# Import sorting
+[tool.ruff.isort]
+known-first-party = ["brightbeam_analysis"]  # Treat these as first-party imports
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+lines-between-types = 1  # Add a line between different import sections
+
+
+[tool.ruff.lint]
+# Additional rules you might want
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
