@@ -11,6 +11,7 @@ class Stats(BaseModel):
     last: float
     avg: float
     var: float
+    values: int
 
 
 class BatchResponse(BaseModel):

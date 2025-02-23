@@ -39,12 +39,13 @@ def test_batch_data_exceeds_max_values():
 
 
 def test_stats_creation():
-    stats = Stats(min=1.0, max=2.0, avg=1.5, var=0.25, last=2.0)
+    stats = Stats(min=1.0, max=2.0, avg=1.5, var=1.5654, last=2.0, values=5)
     assert stats.min == 1.0
     assert stats.max == 2.0
     assert stats.avg == 1.5
-    assert stats.var == 0.25
+    assert stats.var == 1.5654
     assert stats.last == 2.0
+    assert stats.values == 5
 
 
 def test_batch_data_invalid_symbol_type():

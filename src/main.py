@@ -32,3 +32,11 @@ async def get_stats(symbol: str, k: int) -> Stats:
     if not MIN_K <= k <= MAX_K:
         raise InvalidWindowSizeError(k)
     return await symbol_manager.get_stats(symbol, k)
+
+
+@app.get("/window_size/{symbol}/{k}")
+async def get_window_size(symbol: str, k: int) -> dict:
+    if not MIN_K <= k <= MAX_K:
+        raise InvalidWindowSizeError(k)
+    size = await symbol_manager.get_window_size(symbol, k)
+    return {"size": size}

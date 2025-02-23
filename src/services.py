@@ -74,7 +74,10 @@ class RunningStats:
 
         n = len(self.values)
         avg = self.sum / n
-        var = (self.sum_squared / n) - (avg * avg)
+
+        # More numerically stable variance calculation
+        squared_diff_sum = sum((x - avg) ** 2 for x in self.values)
+        var = squared_diff_sum / n
 
         return Stats(
             min=float(self.current_min),
@@ -82,6 +85,7 @@ class RunningStats:
             last=float(self.values[-1]),
             avg=float(avg),
             var=float(var),
+            values=len(self.values),
         )
 
 
@@ -153,3 +157,9 @@ class SymbolManager:
 
             logger.debug(f"Retrieved stats for {symbol} with k={k}")
             return stats
+
+    async def get_window_size(self, symbol: str, k: int) -> int:
+        """Get the current size of the window for a symbol"""
+        if symbol not in self.symbols or k not in self.symbols[symbol]:
+            return 0
+        return len(self.symbols[symbol][k].values)

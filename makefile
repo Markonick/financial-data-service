@@ -68,3 +68,6 @@ kill-session:
 
 kill-all:
 	-tmux kill-server
+
+monitor-ui:
+	poetry run streamlit run scripts/monitor_ui.py
