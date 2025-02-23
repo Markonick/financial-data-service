@@ -1,7 +1,8 @@
-import time
-import asyncio
-from functools import wraps
 import sys
+import time
+
+from functools import wraps
+
 from loguru import logger
 
 # Remove default handler and add our custom handler
@@ -17,9 +18,21 @@ logger.add(
 
 def time_execution(func):
     """
-    Decorator to measure the execution time of an asynchronous function and log the number of requests,
-    average time per request, and average time per trade.
+    Decorator to measure the execution time of an asynchronous function and log
+    the number of requests, average time per request, and average time per trade.
     """
+    # ANSI color codes
+    green = "\033[32m"
+    blue = "\033[34m"
+    cyan = "\033[36m"
+    yellow = "\033[33m"
+    reset = "\033[0m"
+
+    def strip_ansi(text):
+        """Remove ANSI color codes from text"""
+        import re
+
+        return re.sub(r"\033\[\d+m", "", text)
 
     @wraps(func)
     async def wrapper(*args, **kwargs):
@@ -51,28 +64,30 @@ def time_execution(func):
 
         # Create the log lines
         log_lines = [
-            f"\033[32m{timestamp}\033[0m",  # Green timestamp
-            f"\033[34mfunction:\033[0m \033[36m{func.__name__}\033[0m",
-            f"\033[34mexecution_time_microseconds:\033[0m \033[33m{format_value(execution_time)}\033[0m",
-            f"\033[34mtotal_requests:\033[0m \033[33m{request_count}\033[0m",
-            f"\033[34mtotal_trades:\033[0m \033[33m{total_trades}\033[0m",  # Added for debugging
-            f"\033[34maverage_batch_size:\033[0m \033[33m{format_value(average_batch_size)}\033[0m",
-            f"\033[34maverage_time_per_request_microseconds:\033[0m \033[33m{format_value(average_time_per_request)}\033[0m",
-            f"\033[34maverage_time_per_trade_microseconds:\033[0m \033[33m{format_value(average_time_per_trade)}\033[0m",
+            f"{green}{timestamp}{reset}",
+            f"{blue}function:{reset} {cyan}{func.__name__}{reset}",
+            (
+                f"{blue}execution_time_microseconds:{reset} "
+                f"{yellow}{format_value(execution_time)}{reset}"
+            ),
+            f"{blue}total_requests:{reset} {yellow}{request_count}{reset}",
+            f"{blue}total_trades:{reset} {yellow}{total_trades}{reset}",
+            (
+                f"{blue}average_batch_size:{reset} "
+                f"{yellow}{format_value(average_batch_size)}{reset}"
+            ),
+            (
+                f"{blue}average_time_per_request_microseconds:{reset} "
+                f"{yellow}{format_value(average_time_per_request)}{reset}"
+            ),
+            (
+                f"{blue}average_time_per_trade_microseconds:{reset} "
+                f"{yellow}{format_value(average_time_per_trade)}{reset}"
+            ),
         ]
 
         # Find the longest line length (accounting for ANSI escape codes)
-        max_length = max(
-            len(
-                line.replace("\033[32m", "")
-                .replace("\033[34m", "")
-                .replace("\033[36m", "")
-                .replace("\033[33m", "")
-                .replace("\033[37m", "")
-                .replace("\033[0m", "")
-            )
-            for line in log_lines
-        )
+        max_length = max(len(strip_ansi(line)) for line in log_lines)
 
         # Create the box
         box_top = f"╔{'═' * (max_length + 2)}╗"
@@ -82,16 +97,12 @@ def time_execution(func):
         formatted_log = "\n".join(
             [
                 box_top,
-                *[
-                    f"║ {line}{' ' * (max_length - len(line.replace('\033[32m', '').replace('\033[34m', '').replace('\033[36m', '').replace('\033[33m', '').replace('\033[37m', '').replace('\033[0m', '')))} ║"
-                    for line in log_lines
-                ],
+                *[f"║ {line}{' ' * (max_length - len(strip_ansi(line)))} ║" for line in log_lines],
                 box_bottom,
             ]
         )
 
         logger.info(formatted_log)
-
         return result
 
     return wrapper

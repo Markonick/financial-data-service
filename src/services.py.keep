@@ -1,8 +1,9 @@
-import asyncio
 import logging
-
+import asyncio
 from collections import deque
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
+from concurrent.futures import ProcessPoolExecutor
+import os
 
 import numpy as np
 
@@ -94,7 +95,17 @@ class SymbolManager:
     def __init__(self):
         self.symbols: Dict[str, Dict[int, RunningStats]] = {}
         self.locks: Dict[str, asyncio.Lock] = {}
-        logger.debug("Initialized SymbolManager")
+        self.executor = ProcessPoolExecutor(max_workers=10)
+        # Force process pool initialization
+        logger.info(f"Initializing process pool with PID: {os.getpid()}")
+        futures = [self.executor.submit(self._init_worker) for _ in range(10)]
+        for f in futures:
+            f.result()  # Wait for all processes to start
+
+    @staticmethod
+    def _init_worker():
+        logger.info(f"Worker process initialized with PID: {os.getpid()}")
+        return os.getpid()
 
     async def add_batch(self, symbol: str, values: List[float]) -> None:
         """
@@ -114,19 +125,23 @@ class SymbolManager:
         async with self.locks[symbol]:
             if symbol not in self.symbols:
                 if len(self.symbols) >= MAX_SYMBOLS:
-                    logger.error(f"Failed to add symbol {symbol}: MAX_SYMBOLS limit reached")
                     raise MaxSymbolsReachedError(MAX_SYMBOLS)
-                logger.debug(f"Adding new symbol: {symbol}")
-                # Initialize RunningStats for each window size
                 self.symbols[symbol] = {
                     k: RunningStats(window_size=WINDOW_SIZES[k]) for k in range(MIN_K, MAX_K + 1)
                 }
 
-            logger.debug(f"Adding batch of {len(values)} values for {symbol}")
-            # Update all window sizes with new values
-            for value in values:
-                for stats in self.symbols[symbol].values():
-                    stats.add(value)
+            # Process all values for this symbol in its dedicated worker
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                self.executor, self._process_symbol, self.symbols[symbol], values
+            )
+
+    @staticmethod
+    def _process_symbol(symbol_data: Dict[int, RunningStats], values: List[float]) -> None:
+        """Process all values for a symbol."""
+        for value in values:
+            for stats in symbol_data.values():
+                stats.add(value)
 
     async def get_stats(self, symbol: str, k: int) -> Stats:
         """

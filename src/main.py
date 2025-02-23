@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
 from src.constants import MAX_K, MIN_K
@@ -17,8 +19,12 @@ async def financial_service_exception_handler(request, exc: FinancialServiceErro
 
 @app.post("/add_batch/", response_model=BatchResponse, status_code=201)
 async def add_batch(data: BatchData) -> BatchResponse:
-    await symbol_manager.add_batch(data.symbol, data.values)
-    return BatchResponse(status="success", message=f"Added batch for symbol: {data.symbol}")
+    try:
+        await symbol_manager.add_batch(data.symbol, data.values)
+        return BatchResponse(status="success", message=f"Added batch for symbol: {data.symbol}")
+    except Exception as e:
+        logging.error(f"Error in add_batch: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/stats/{symbol}/{k}", response_model=Stats)

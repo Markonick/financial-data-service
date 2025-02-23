@@ -1,11 +1,13 @@
 import asyncio
-import random
 import logging
-from typing import Optional, List
+import random
 import time
+
+from typing import List, Optional
 
 import httpx
 import numpy as np
+
 from src.models import BatchData
 from src.utils import time_execution  # Import the timing decorator
 
@@ -53,8 +55,8 @@ async def simulate_hft_stream(batch_count: Optional[int] = None):
     try:
         while True:
             symbol = random.choice(REAL_SYMBOLS)
-            batch_size = random.randint(MIN_BATCH_SIZE, MAX_BATCH_SIZE)
-            values = generate_random_values(MIN_BATCH_SIZE)  # Using MIN_BATCH_SIZE for debugging
+            batch_size = random.randint(MIN_BATCH_SIZE, MIN_BATCH_SIZE)
+            values = generate_random_values(batch_size)
             batch_data = BatchData(symbol=symbol, values=values)
 
             try:
@@ -74,7 +76,7 @@ async def simulate_hft_stream(batch_count: Optional[int] = None):
                     logger.info("Empty response for %s", symbol)
 
             except Exception as e:
-                logger.error(f"Error sending batch: {str(e)}")
+                logger.error(f"Error sending batch: {e!s}")
 
             if batch_count is not None:
                 if request_count >= batch_count:
@@ -91,4 +93,4 @@ async def simulate_hft_stream(batch_count: Optional[int] = None):
 
 # Example usage
 if __name__ == "__main__":
-    asyncio.run(simulate_hft_stream(batch_count=1))
+    asyncio.run(simulate_hft_stream(batch_count=10000))

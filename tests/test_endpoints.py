@@ -1,6 +1,5 @@
-import pytest
 import httpx
-from fastapi import FastAPI
+import pytest
 
 from src.constants import MAX_BATCH_SIZE, MAX_K, MIN_K
 from src.main import app

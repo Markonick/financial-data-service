@@ -26,6 +26,9 @@ test-method:
 lint:
 	poetry run ruff .
 
+lint-fix:
+	poetry run ruff check . --fix 
+
 kill-server:
 	@lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 

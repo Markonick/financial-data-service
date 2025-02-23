@@ -1,6 +1,6 @@
 import pytest
 
-from src.constants import MAX_SYMBOLS, MIN_K
+from src.constants import MAX_SYMBOLS
 from src.exceptions import MaxSymbolsReachedError, SymbolNotFoundError
 from src.services import SymbolManager
 
