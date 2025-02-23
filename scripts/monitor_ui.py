@@ -13,6 +13,39 @@ SYMBOLS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "FB", "BRK.A", "V", "JNJ", "
 MAX_WINDOW_SIZE = 10**8  # The maximum window size
 
 
+def symbol_progress_pill(symbol: str, progress: float, current_size: int):
+    """Create a custom pill with progress indication"""
+    percentage = progress * 100
+    color = (
+        "#ff4b4b"
+        if progress < 0.25
+        else "#ffa726"
+        if progress < 0.5
+        else "#ffeb3b"
+        if progress < 0.75
+        else "#00c853"
+    )
+
+    st.markdown(
+        f"""
+        <div style="
+            width: 100%;
+            padding: 0.5em;
+            border-radius: 0.5rem;
+            background: linear-gradient(90deg, {color} {percentage}%, #262730 {percentage}%);
+            color: white;
+            margin: 0.5em 0;
+            display: flex;
+            align-items: center;
+        ">
+            <span style="font-size: 1.5em; margin-right: 1em;">{symbol}</span>
+            <span style="font-size: 0.8em;">{percentage:.1f}% ({current_size:,}/{MAX_WINDOW_SIZE:,})</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 async def get_stats(client: httpx.AsyncClient, symbol: str, k: int):
     try:
         response = await client.get(f"http://localhost:8000/stats/{symbol}/{k}")
@@ -35,7 +68,6 @@ async def fetch_all_stats():
                 for k in range(1, 9):
                     stats = await get_stats(client, symbol, k)
                     if stats:
-                        window_size = 10**k
                         stats_data[symbol]["window_stats"].append(
                             {
                                 "window": f"10^{k}",
@@ -93,18 +125,12 @@ def main():
         # First symbol
         with col1:
             if symbol1 in active_symbols and symbol1 in stats_data:
-                # Active symbol pill
-                st.success(symbol1)
-
-                # Progress bar
                 max_window = stats_data[symbol1]["max_window"]
                 if max_window:
                     current = max_window["current_size"]
                     progress = min(1.0, current / MAX_WINDOW_SIZE)
-                    percentage = progress * 100
-                    st.progress(progress, text=f"{percentage:.1f}%")
+                    symbol_progress_pill(symbol1, progress, current)
 
-                # Stats table
                 df = pd.DataFrame(stats_data[symbol1]["window_stats"])
                 df = df.set_index("window")
                 st.dataframe(
@@ -127,18 +153,12 @@ def main():
         with col2:
             if symbol2:  # Check if there is a second symbol (for odd number of symbols)
                 if symbol2 in active_symbols and symbol2 in stats_data:
-                    # Active symbol pill
-                    st.success(symbol2)
-
-                    # Progress bar
                     max_window = stats_data[symbol2]["max_window"]
                     if max_window:
                         current = max_window["current_size"]
                         progress = min(1.0, current / MAX_WINDOW_SIZE)
-                        percentage = progress * 100
-                        st.progress(progress, text=f"{percentage:.1f}%")
+                        symbol_progress_pill(symbol2, progress, current)
 
-                    # Stats table
                     df = pd.DataFrame(stats_data[symbol2]["window_stats"])
                     df = df.set_index("window")
                     st.dataframe(
