@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from .constants import MAX_K, MIN_K
-from .exceptions import FinancialServiceError, InvalidWindowSizeError
-from .models import BatchData, BatchResponse, Stats
-from .services import SymbolManager
+from src.constants import MAX_K, MIN_K
+from src.exceptions import FinancialServiceError, InvalidWindowSizeError
+from src.models import BatchData, BatchResponse, Stats
+from src.services import SymbolManager
 
 app = FastAPI(title="Financial Data Service")
 symbol_manager = SymbolManager()
@@ -17,7 +17,7 @@ async def financial_service_exception_handler(request, exc: FinancialServiceErro
 
 @app.post("/add_batch/", response_model=BatchResponse, status_code=201)
 async def add_batch(data: BatchData) -> BatchResponse:
-    symbol_manager.add_batch(data.symbol, data.values)
+    await symbol_manager.add_batch(data.symbol, data.values)
     return BatchResponse(status="success", message=f"Added batch for symbol: {data.symbol}")
 
 
@@ -25,4 +25,4 @@ async def add_batch(data: BatchData) -> BatchResponse:
 async def get_stats(symbol: str, k: int) -> Stats:
     if not MIN_K <= k <= MAX_K:
         raise InvalidWindowSizeError(k)
-    return symbol_manager.get_stats(symbol, k)
+    return await symbol_manager.get_stats(symbol, k)

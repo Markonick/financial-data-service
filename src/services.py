@@ -1,5 +1,5 @@
 import logging
-
+import asyncio
 from collections import deque
 from typing import Dict, List, Optional
 
@@ -92,9 +92,10 @@ class SymbolManager:
 
     def __init__(self):
         self.symbols: Dict[str, Dict[int, RunningStats]] = {}
+        self.locks: Dict[str, asyncio.Lock] = {}
         logger.debug("Initialized SymbolManager")
 
-    def add_batch(self, symbol: str, values: List[float]) -> None:
+    async def add_batch(self, symbol: str, values: List[float]) -> None:
         """
         Add a batch of values for a symbol.
 
@@ -106,23 +107,27 @@ class SymbolManager:
 
         Raises ValueError if attempting to add more than MAX_SYMBOLS unique symbols
         """
-        if symbol not in self.symbols:
-            if len(self.symbols) >= MAX_SYMBOLS:
-                logger.error(f"Failed to add symbol {symbol}: MAX_SYMBOLS limit reached")
-                raise MaxSymbolsReachedError(MAX_SYMBOLS)
-            logger.debug(f"Adding new symbol: {symbol}")
-            # Initialize RunningStats for each window size
-            self.symbols[symbol] = {
-                k: RunningStats(window_size=WINDOW_SIZES[k]) for k in range(MIN_K, MAX_K + 1)
-            }
+        if symbol not in self.locks:
+            self.locks[symbol] = asyncio.Lock()
 
-        logger.debug(f"Adding batch of {len(values)} values for {symbol}")
-        # Update all window sizes with new values
-        for value in values:
-            for stats in self.symbols[symbol].values():
-                stats.add(value)
+        async with self.locks[symbol]:
+            if symbol not in self.symbols:
+                if len(self.symbols) >= MAX_SYMBOLS:
+                    logger.error(f"Failed to add symbol {symbol}: MAX_SYMBOLS limit reached")
+                    raise MaxSymbolsReachedError(MAX_SYMBOLS)
+                logger.debug(f"Adding new symbol: {symbol}")
+                # Initialize RunningStats for each window size
+                self.symbols[symbol] = {
+                    k: RunningStats(window_size=WINDOW_SIZES[k]) for k in range(MIN_K, MAX_K + 1)
+                }
 
-    def get_stats(self, symbol: str, k: int) -> Stats:
+            logger.debug(f"Adding batch of {len(values)} values for {symbol}")
+            # Update all window sizes with new values
+            for value in values:
+                for stats in self.symbols[symbol].values():
+                    stats.add(value)
+
+    async def get_stats(self, symbol: str, k: int) -> Stats:
         """
         Get statistics for a symbol's last 10^k values
 
@@ -132,14 +137,18 @@ class SymbolManager:
         Raises:
             SymbolNotFoundError: if symbol doesn't exist
         """
-        if symbol not in self.symbols or k not in self.symbols[symbol]:
-            logger.error(f"Stats request failed: Symbol {symbol} not found")
-            raise SymbolNotFoundError(symbol)
+        if symbol not in self.locks:
+            self.locks[symbol] = asyncio.Lock()
 
-        stats = self.symbols[symbol][k].get_stats()
-        if stats is None:
-            logger.error(f"Stats request failed: No data for symbol {symbol}")
-            raise SymbolNotFoundError(symbol)
+        async with self.locks[symbol]:
+            if symbol not in self.symbols:
+                logger.error(f"Stats request failed: Symbol {symbol} not found")
+                raise SymbolNotFoundError(symbol)
 
-        logger.debug(f"Retrieved stats for {symbol} with k={k}")
-        return stats
+            stats = self.symbols[symbol][k].get_stats()
+            if stats is None:
+                logger.error(f"Stats request failed: No data for symbol {symbol}")
+                raise SymbolNotFoundError(symbol)
+
+            logger.debug(f"Retrieved stats for {symbol} with k={k}")
+            return stats

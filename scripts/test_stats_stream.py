@@ -18,16 +18,16 @@ REAL_SYMBOLS = [
     "V",
     "JNJ",
     "WMT",
-    "JPM",
-    "NVDA",
-    "DIS",
-    "PYPL",
-    "MA",
-    "NFLX",
-    "ADBE",
-    "INTC",
-    "CMCSA",
-    "PFE",
+    # "JPM",
+    # "NVDA",
+    # "DIS",
+    # "PYPL",
+    # "MA",
+    # "NFLX",
+    # "ADBE",
+    # "INTC",
+    # "CMCSA",
+    # "PFE",
 ]
 
 
@@ -55,8 +55,8 @@ async def simulate_stats_requests(num_requests: Optional[int] = None):
             except Exception as e:
                 print(f"Error querying stats for {symbol} (k={k}): {str(e)}")
 
-            # Random delay between requests (0.1 to 0.2 second) per batch = ms per data-point
-            await asyncio.sleep(random.uniform(0.1, 0.2))
+            # Random delay between requests (0.01 to 0.02 second) per batch = 1-2 ms per request
+            await asyncio.sleep(random.uniform(0.01, 0.02))
 
             if num_requests is not None:
                 num_requests -= 1
@@ -65,10 +65,9 @@ async def simulate_stats_requests(num_requests: Optional[int] = None):
 
 
 async def main():
-    num_requests = 15  # Adjust this number as needed
-    print(f"Starting {num_requests} random stats requests...")
-    await simulate_stats_requests(num_requests)
-    print("\nFinished stats requests simulation")
+    num_requests = None  # Adjust this number as needed
+
+    await simulate_stats_requests()
 
 
 if __name__ == "__main__":
