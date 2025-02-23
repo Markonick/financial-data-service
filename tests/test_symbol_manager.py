@@ -52,6 +52,5 @@ def test_symbol_manager_batch_processing():
 
     # Check stats for different window sizes
     stats_k1 = manager.get_stats("AAPL", 1)  # window_size = 10
-    assert stats_k1.curr_window_size == 3
     assert stats_k1.min == 1.0
     assert stats_k1.max == 3.0

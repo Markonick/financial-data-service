@@ -20,6 +20,9 @@ class RunningStats:
     """
 
     def __init__(self, window_size: int):
+        """
+        Initialize RunningStats with a fixed window size.
+        """
         self.window_size = window_size
         self.values: deque[np.float32] = deque(maxlen=window_size)
 
@@ -28,20 +31,19 @@ class RunningStats:
         self.sum_squared: np.float32 = np.float32(0.0)
         self.current_min: np.float32 = np.float32(np.inf)
         self.current_max: np.float32 = np.float32(-np.inf)
+        logger.debug(f"Initialized RunningStats with window_size={window_size}")
 
     def add(self, value: float) -> None:
-        """Add a new value and update running statistics"""
-
-        # Store value as float32 to save memory
-        value16 = np.float32(value)
-        value32 = np.float32(value)  # Use float32 for calculations
-
-        # If window is full, remove oldest value's contribution
+        """
+        Add a new value and update running statistics.
+        """
+        value32 = np.float32(value)
         if len(self.values) == self.window_size:
             oldest = self.values.popleft()
             oldest32 = np.float32(oldest)
             self.sum -= oldest32
             self.sum_squared -= oldest32 * oldest32
+            logger.debug(f"Window full, removing oldest value: {oldest}")
 
             # If oldest was min/max, recalculate from window
             if oldest == self.current_min or oldest == self.current_max:
@@ -49,19 +51,24 @@ class RunningStats:
                 self.current_max = np.float32(max(self.values))
 
         # Add new value
-        self.values.append(value16)
+        self.values.append(value32)
         self.sum += value32
         self.sum_squared += value32 * value32
 
         # Update min/max
-        if value16 < self.current_min:
-            self.current_min = value16
-        if value16 > self.current_max:
-            self.current_max = value16
+        if value32 < self.current_min:
+            logger.debug(f"New minimum value: {value32}")
+            self.current_min = value32
+        if value32 > self.current_max:
+            logger.debug(f"New maximum value: {value32}")
+            self.current_max = value32
 
     def get_stats(self) -> Optional[Stats]:
-        """Calculate statistics in O(1) time using running sums"""
+        """
+        Calculate statistics in O(1) time using running sums.
+        """
         if not self.values:
+            logger.warning("Attempted to get stats with no values")
             return None
 
         n = len(self.values)
@@ -74,15 +81,18 @@ class RunningStats:
             last=float(self.values[-1]),
             avg=float(avg),
             var=float(var),
-            curr_window_size=n,
         )
 
 
 class SymbolManager:
-    """Manages trading data for multiple symbols"""
+    """
+    Manages multiple symbols' trading data with efficient statistical calculations.
+    Provides O(1) stats retrieval and O(b) batch updates.
+    """
 
     def __init__(self):
         self.symbols: Dict[str, Dict[int, RunningStats]] = {}
+        logger.debug("Initialized SymbolManager")
 
     def add_batch(self, symbol: str, values: List[float]) -> None:
         """
@@ -98,12 +108,15 @@ class SymbolManager:
         """
         if symbol not in self.symbols:
             if len(self.symbols) >= MAX_SYMBOLS:
+                logger.error(f"Failed to add symbol {symbol}: MAX_SYMBOLS limit reached")
                 raise MaxSymbolsReachedError(MAX_SYMBOLS)
+            logger.debug(f"Adding new symbol: {symbol}")
             # Initialize RunningStats for each window size
             self.symbols[symbol] = {
                 k: RunningStats(window_size=WINDOW_SIZES[k]) for k in range(MIN_K, MAX_K + 1)
             }
 
+        logger.debug(f"Adding batch of {len(values)} values for {symbol}")
         # Update all window sizes with new values
         for value in values:
             for stats in self.symbols[symbol].values():
@@ -120,10 +133,13 @@ class SymbolManager:
             SymbolNotFoundError: if symbol doesn't exist
         """
         if symbol not in self.symbols or k not in self.symbols[symbol]:
+            logger.error(f"Stats request failed: Symbol {symbol} not found")
             raise SymbolNotFoundError(symbol)
 
         stats = self.symbols[symbol][k].get_stats()
         if stats is None:
+            logger.error(f"Stats request failed: No data for symbol {symbol}")
             raise SymbolNotFoundError(symbol)
 
+        logger.debug(f"Retrieved stats for {symbol} with k={k}")
         return stats

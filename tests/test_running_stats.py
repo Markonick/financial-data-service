@@ -86,7 +86,6 @@ def test_running_stats_get_stats():
     assert result.last == 2.0
     assert result.avg == 2.0
     assert result.var == 0.0
-    assert result.curr_window_size == 1
 
 
 def test_running_stats_precision():

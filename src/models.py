@@ -11,7 +11,6 @@ class Stats(BaseModel):
     last: float
     avg: float
     var: float
-    curr_window_size: int
 
 
 class BatchResponse(BaseModel):
@@ -24,12 +23,23 @@ class ErrorResponse(BaseModel):
 
 
 class BatchData(BaseModel):
+    """
+    Model for batch data input validation.
+
+    Attributes:
+        symbol (str): Stock market symbol identifier
+        values (List[float]): List of trading values
+    """
+
     symbol: str
     values: List[float]
 
     @field_validator("symbol")
     @classmethod
     def validate_symbol(cls, symbol: str) -> str:
+        """
+        Validate symbol is not empty.
+        """
         if not symbol:
             raise ValueError("Symbol cannot be empty")
         return symbol
@@ -37,6 +47,9 @@ class BatchData(BaseModel):
     @field_validator("values")
     @classmethod
     def validate_values(cls, values: List[float]) -> List[float]:
+        """
+        Validate list of trading values.
+        """
         if not isinstance(values, list):
             raise ValueError("Values must be a list")
         if not values:

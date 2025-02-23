@@ -8,7 +8,7 @@ client = TestClient(app)
 
 def test_add_batch_endpoint_valid():
     response = client.post("/add_batch/", json={"symbol": "AAPL", "values": [1.0, 2.0, 3.0]})
-    assert response.status_code == 200
+    assert response.status_code == 201
 
 
 def test_add_batch_endpoint_invalid_batch_size():

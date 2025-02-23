@@ -15,7 +15,7 @@ async def financial_service_exception_handler(request, exc: FinancialServiceErro
     return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
 
 
-@app.post("/add_batch/", response_model=BatchResponse)
+@app.post("/add_batch/", response_model=BatchResponse, status_code=201)
 async def add_batch(data: BatchData) -> BatchResponse:
     symbol_manager.add_batch(data.symbol, data.values)
     return BatchResponse(status="success", message=f"Added batch for symbol: {data.symbol}")
