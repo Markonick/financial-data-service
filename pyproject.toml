@@ -39,6 +39,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+addopts = "-p no:cacheprovider"  # Prevents pytest cache
 
 # Import sorting
 [tool.ruff.isort]
