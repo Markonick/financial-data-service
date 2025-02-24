@@ -103,6 +103,20 @@ async def fetch_all_stats():
         return active_symbols, stats_data
 
 
+def format_stats_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Format statistics DataFrame with consistent number formatting."""
+    return df.style.format(
+        {
+            "min": "{:.2f}",
+            "max": "{:.2f}",
+            "last": "{:.2f}",
+            "avg": "{:.2f}",
+            "var": "{:.2f}",
+            "values": "{:,.0f}",
+        }
+    )
+
+
 def main():
     st.set_page_config(page_title="Financial Data Monitor", layout="wide")
     st.title("Financial Data Service Monitor")
@@ -149,16 +163,7 @@ def main():
                     df = pd.DataFrame(stats_data[symbol1]["window_stats"])
                     df = df.set_index("window")
                     st.dataframe(
-                        df.style.format(
-                            {
-                                "min": "{:.2f}",
-                                "max": "{:.2f}",
-                                "last": "{:.2f}",
-                                "avg": "{:.2f}",
-                                "var": "{:.2f}",
-                                "values": "{:,.0f}",
-                            }
-                        ),
+                        format_stats_dataframe(df),
                         use_container_width=True,
                     )
             else:
@@ -179,16 +184,7 @@ def main():
                         df = pd.DataFrame(stats_data[symbol2]["window_stats"])
                         df = df.set_index("window")
                         st.dataframe(
-                            df.style.format(
-                                {
-                                    "min": "{:.2f}",
-                                    "max": "{:.2f}",
-                                    "last": "{:.2f}",
-                                    "avg": "{:.2f}",
-                                    "var": "{:.2f}",
-                                    "values": "{:,.0f}",
-                                }
-                            ),
+                            format_stats_dataframe(df),
                             use_container_width=True,
                         )
                 else:

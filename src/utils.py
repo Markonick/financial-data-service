@@ -46,9 +46,6 @@ def time_execution(func):
         total_time = result.get("total_time", 0.0)
         total_trades = result.get("total_trades", 0)
 
-        # Debug print
-        logger.debug(f"total_trades: {total_trades}, request_count: {request_count}")
-
         average_time_per_request = total_time / request_count if request_count > 0 else None
         average_time_per_trade = total_time / total_trades if total_trades > 0 else None
         average_batch_size = total_trades / request_count if request_count > 0 else None

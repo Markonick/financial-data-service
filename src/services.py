@@ -31,7 +31,6 @@ class RunningStats:
         self.sum = np.float32(0.0)
         self.avg = np.float32(0.0)
         self.M2 = np.float32(0.0)
-        logger.debug(f"Initialized RunningStats with window_size={window_size}")
 
     def add(self, value: float) -> None:
         """Add a value to the running stats."""
@@ -99,7 +98,6 @@ class SymbolManager:
     def __init__(self):
         self.symbols: Dict[str, Dict[int, RunningStats]] = {}
         self.locks: Dict[str, asyncio.Lock] = {}
-        logger.debug("Initialized SymbolManager")
 
     async def add_batch(self, symbol: str, values: List[float]) -> None:
         """
@@ -121,13 +119,12 @@ class SymbolManager:
                 if len(self.symbols) >= MAX_SYMBOLS:
                     logger.error(f"Failed to add symbol {symbol}: MAX_SYMBOLS limit reached")
                     raise MaxSymbolsReachedError(MAX_SYMBOLS)
-                logger.debug(f"Adding new symbol: {symbol}")
+
                 # Initialize RunningStats for each window size
                 self.symbols[symbol] = {
                     k: RunningStats(window_size=WINDOW_SIZES[k]) for k in range(MIN_K, MAX_K + 1)
                 }
 
-            logger.debug(f"Adding batch of {len(values)} values for {symbol}")
             # Update all window sizes with new values
             for value in values:
                 for stats in self.symbols[symbol].values():
