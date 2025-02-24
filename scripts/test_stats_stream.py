@@ -67,8 +67,6 @@ async def simulate_stats_requests(num_requests: Optional[int] = None):
             except Exception as e:
                 print(f"Error querying stats for {symbol} (k={k}): {e!s}")
 
-            # await asyncio.sleep(random.uniform(0.0001, 0.0001))
-
             if num_requests is not None:
                 num_requests -= 1
                 if num_requests == 0:

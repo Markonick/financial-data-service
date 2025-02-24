@@ -93,4 +93,4 @@ async def simulate_hft_stream(batch_count: Optional[int] = None):
 
 # Example usage
 if __name__ == "__main__":
-    asyncio.run(simulate_hft_stream(batch_count=100000))
+    asyncio.run(simulate_hft_stream(batch_count=1000))
