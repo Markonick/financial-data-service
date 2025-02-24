@@ -218,8 +218,10 @@ Maximum (10 symbols): ~4.5 GB
 
 **stats**
 - Batch Processing: 7ms per stats request, 1000 async requests
-![Stats](images/stats_1000.png){width=300px}
 
+| <img src="images/stats_1000.png" width="300"/> |
+|:---:|
+| num of requests: 1000, k = 1...8 |
 
 ## Monitoring with Streamlit
 You have the ability to observe the stats and window sizes progression in Streamlit, which
