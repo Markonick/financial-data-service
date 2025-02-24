@@ -157,9 +157,3 @@ class SymbolManager:
 
             logger.debug(f"Retrieved stats for {symbol} with k={k}")
             return stats
-
-    async def get_window_size(self, symbol: str, k: int) -> int:
-        """Get the current size of the window for a symbol"""
-        if symbol not in self.symbols or k not in self.symbols[symbol]:
-            return 0
-        return len(self.symbols[symbol][k].values)

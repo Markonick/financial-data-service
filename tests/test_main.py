@@ -1,8 +1,9 @@
 import httpx
 import pytest
 
-from src.constants import MAX_BATCH_SIZE, MAX_K, MIN_K
+from src.constants import MAX_BATCH_SIZE, MAX_K, MAX_SYMBOLS, MIN_K
 from src.main import app
+from src.main import symbol_manager as app_symbol_manager
 
 
 @pytest.mark.asyncio
@@ -86,3 +87,28 @@ async def test_get_stats_endpoint_invalid_k_negative():
         response = await async_client.get("/stats/AAPL/-1")
         assert response.status_code == 422
         assert response.json()["detail"] == "Window size exponent (k=-1) must be between 1 and 8"
+
+
+@pytest.mark.asyncio
+async def test_add_batch_endpoint_max_symbols_error():
+    # Clear the existing symbol_manager
+    app_symbol_manager.symbols.clear()
+
+    print(f"\nMAX_SYMBOLS = {MAX_SYMBOLS}")
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as async_client:
+        # Add MAX_SYMBOLS (should all succeed)
+        for i in range(MAX_SYMBOLS):
+            print(f"\nBefore adding TEST{i}, symbols: {list(app_symbol_manager.symbols.keys())}")
+            response = await async_client.post(
+                "/add_batch/", json={"symbol": f"TEST{i}", "values": [1.0]}
+            )
+            print(f"After adding TEST{i}, symbols: {list(app_symbol_manager.symbols.keys())}")
+            print(f"Symbol {i} - Status: {response.status_code}")
+            assert response.status_code == 201, f"Failed to add symbol {i}"
+
+        # Try to add one more (should fail with 400)
+        response = await async_client.post("/add_batch/", json={"symbol": "EXTRA", "values": [1.0]})
+        assert response.status_code == 400
+        assert "Maximum number of symbols" in response.json()["detail"]

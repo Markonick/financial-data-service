@@ -1,3 +1,4 @@
+from math import isfinite
 from typing import List
 
 from pydantic import BaseModel, field_validator
@@ -59,4 +60,6 @@ class BatchData(BaseModel):
             raise ValueError(f"Batch size cannot exceed {MAX_BATCH_SIZE} values")
         if not all(isinstance(value, (int, float)) for value in values):
             raise ValueError("All values must be numbers")
+        if not all(isfinite(float(value)) for value in values):
+            raise ValueError("All values must be finite numbers")
         return values

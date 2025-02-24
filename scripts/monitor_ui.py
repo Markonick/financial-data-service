@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 
 # Constants
-REFRESH_RATE = 1  # seconds
+REFRESH_RATE = 0.1  # seconds (faster refresh)
 SYMBOLS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "FB", "BRK.A", "V", "JNJ", "WMT"]
 MAX_WINDOW_SIZE = 10**8  # The maximum window size
 
@@ -59,14 +59,24 @@ async def fetch_all_stats():
         active_symbols = set()
         stats_data: Dict[str, dict] = {}
 
+        # Fetch initial stats for all symbols concurrently
+        tasks = []
         for symbol in SYMBOLS:
-            stats = await get_stats(client, symbol, 1)
+            tasks.append(get_stats(client, symbol, 1))
+        initial_stats = await asyncio.gather(*tasks)
+
+        for symbol, stats in zip(SYMBOLS, initial_stats):
             if stats:
                 active_symbols.add(symbol)
                 stats_data[symbol] = {"window_stats": [], "max_window": None}
 
+                # Fetch all window sizes concurrently for this symbol
+                window_tasks = []
                 for k in range(1, 9):
-                    stats = await get_stats(client, symbol, k)
+                    window_tasks.append(get_stats(client, symbol, k))
+                window_stats = await asyncio.gather(*window_tasks)
+
+                for k, stats in enumerate(window_stats, 1):
                     if stats:
                         stats_data[symbol]["window_stats"].append(
                             {
@@ -131,35 +141,9 @@ def main():
                     progress = min(1.0, current / MAX_WINDOW_SIZE)
                     symbol_progress_pill(symbol1, progress, current)
 
-                df = pd.DataFrame(stats_data[symbol1]["window_stats"])
-                df = df.set_index("window")
-                st.dataframe(
-                    df.style.format(
-                        {
-                            "min": "{:.2f}",
-                            "max": "{:.2f}",
-                            "last": "{:.2f}",
-                            "avg": "{:.2f}",
-                            "var": "{:.2f}",
-                            "values": "{:,.0f}",
-                        }
-                    ),
-                    use_container_width=True,
-                )
-            else:
-                st.error(symbol1)
-
-        # Second symbol (if it exists)
-        with col2:
-            if symbol2:  # Check if there is a second symbol (for odd number of symbols)
-                if symbol2 in active_symbols and symbol2 in stats_data:
-                    max_window = stats_data[symbol2]["max_window"]
-                    if max_window:
-                        current = max_window["current_size"]
-                        progress = min(1.0, current / MAX_WINDOW_SIZE)
-                        symbol_progress_pill(symbol2, progress, current)
-
-                    df = pd.DataFrame(stats_data[symbol2]["window_stats"])
+                # Create DataFrame only if we have window stats
+                if stats_data[symbol1]["window_stats"]:
+                    df = pd.DataFrame(stats_data[symbol1]["window_stats"])
                     df = df.set_index("window")
                     st.dataframe(
                         df.style.format(
@@ -174,6 +158,36 @@ def main():
                         ),
                         use_container_width=True,
                     )
+            else:
+                st.error(symbol1)
+
+        # Second symbol (if it exists)
+        with col2:
+            if symbol2:  # Check if there is a second symbol (for odd number of symbols)
+                if symbol2 in active_symbols and symbol2 in stats_data:
+                    max_window = stats_data[symbol2]["max_window"]
+                    if max_window:
+                        current = max_window["current_size"]
+                        progress = min(1.0, current / MAX_WINDOW_SIZE)
+                        symbol_progress_pill(symbol2, progress, current)
+
+                    # Create DataFrame only if we have window stats
+                    if stats_data[symbol2]["window_stats"]:
+                        df = pd.DataFrame(stats_data[symbol2]["window_stats"])
+                        df = df.set_index("window")
+                        st.dataframe(
+                            df.style.format(
+                                {
+                                    "min": "{:.2f}",
+                                    "max": "{:.2f}",
+                                    "last": "{:.2f}",
+                                    "avg": "{:.2f}",
+                                    "var": "{:.2f}",
+                                    "values": "{:,.0f}",
+                                }
+                            ),
+                            use_container_width=True,
+                        )
                 else:
                     st.error(symbol2)
 

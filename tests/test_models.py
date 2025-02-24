@@ -60,25 +60,25 @@ def test_batch_data_invalid_values_type():
     assert "Input should be a valid list" in str(exc_info.value)
 
 
+# Catched by Pydantic's built-in validation at earlier validation stage than our custom validator.
 def test_batch_data_invalid_value_types_in_list():
     with pytest.raises(ValidationError) as exc_info:
         BatchData(symbol="AAPL", values=[1.0, "abc", 3.0])  # "abc" can't be converted to float
-    error_msg = str(exc_info.value)
-    assert "Input should be a valid number" in error_msg
+    assert "Input should be a valid number" in str(exc_info.value)
 
 
+# Catched by Pydantic's built-in validation at earlier validation stage than our custom validator.
 def test_batch_data_mixed_value_types_in_list():
     with pytest.raises(ValidationError) as exc_info:
         BatchData(symbol="AAPL", values=[1.0, None, 3.0])  # None can't be converted to float
-    error_msg = str(exc_info.value)
-    assert "Input should be a valid number" in error_msg
+    assert "Input should be a valid number" in str(exc_info.value)
 
 
+# Catched by Pydantic's built-in validation at earlier validation stage than our custom validator.
 def test_batch_data_non_numeric_values():
     with pytest.raises(ValidationError) as exc_info:
         BatchData(symbol="AAPL", values=["abc", "def", "ghi"])
-    error_msg = str(exc_info.value)
-    assert "Input should be a valid number" in error_msg
+    assert "Input should be a valid number" in str(exc_info.value)
 
 
 def test_batch_data_missing_fields():
@@ -89,3 +89,22 @@ def test_batch_data_missing_fields():
     # Test missing values
     with pytest.raises(ValidationError):
         BatchData(symbol="AAPL")
+
+
+def test_batch_data_validation_non_finite():
+    """Test BatchData validation with non-finite values"""
+    with pytest.raises(ValidationError) as exc_info:
+        BatchData(symbol="AAPL", values=[float("inf")])
+
+    error = exc_info.value.errors()[0]
+    assert error["loc"] == ("values",)
+    assert "finite" in error["msg"].lower()
+
+
+def test_batch_data_empty_symbol():
+    """Test that empty symbol raises validation error"""
+    with pytest.raises(ValidationError) as exc_info:
+        BatchData(symbol="", values=[1.0])
+    error = exc_info.value.errors()[0]
+    assert error["loc"] == ("symbol",)
+    assert "Symbol cannot be empty" in error["msg"]

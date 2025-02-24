@@ -71,3 +71,10 @@ kill-all:
 
 monitor-ui:
 	poetry run streamlit run scripts/monitor_ui.py
+
+.PHONY: profile
+profile:
+	poetry run python -m cProfile -o profile.stats src/main.py
+
+profile-view:
+	poetry run python -m snakeviz profile.stats
