@@ -48,7 +48,7 @@ in a quadrant setup.
 - Bottom-left: Post batches **(make batches)**
 - Bottom-right: Htop monitor **(make monitor)**
 
-![Tmux](images/tmux.gif)
+![Tmux](images/tmux.gif){width=600px}
 
 Run this script to give your mouse control of tmux:
 ```sh
@@ -76,6 +76,8 @@ make test
 ```sh
 make test-cov
 ```
+![Testing](images/testing.png){width=600px}
+
 ### Run Specific Test Method
 ```sh
 make test-method file=test_running_stats.py method=test_running_stats_initialization
@@ -85,6 +87,9 @@ make test-method file=test_running_stats.py method=test_running_stats_initializa
 make test-file file=test_running_stats.py
 ```
 
+
+
+## ARCHITECTURE
 ```
 
 Compact version:
@@ -182,10 +187,21 @@ Total per symbol: ~444.45 MB
 Maximum (10 symbols): ~4.5 GB
 
 ### Throughput
-- Batch Processing: ~50,000 points/second
-  - 10,000 points every 200ms
-  - Each point = 0.02ms
 
+*** add-batch ***
+- Batch Processing: ~50,000 for the first 5 test runs, then big batches with many requests
+- As we increase the batch size, we can fit in more trades within a certain time window
+- Requests overhead penalty
+
+| <img src="images/batch_1_50000.png" width="300"/> | <img src="images/batch_10_5000.png" width="300"/> |
+|:---:|:---:|
+| batch-size: 1 / num of requests: 50000 | batch-size: 10 / num of requests: 5000 |
+| <img src="images/batch_100_500.png" width="300"/> | <img src="images/batch_1000_50.png" width="300"/> |
+| batch-size: 100 / num of requests: 500 | batch-size: 1000 / num of requests: 50 |
+| <img src="images/batch_10000_5.png" width="300"/> | <img src="images/batch_10000_1000.png" width="300"/> |
+| batch-size: 10000 / num of requests: 5 | batch-size: 10000 / num of requests: 1000 |
+| <img src="images/batch_rand_1000.png" width="300"/> | |
+| batch-size: random / num of requests: 1000 | |
 
 ## API Endpoints
 - `POST /add_batch/`: Add a batch of trading data.
@@ -195,8 +211,8 @@ Maximum (10 symbols): ~4.5 GB
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-![Swagger](images/swagger.png)
-![Redoc](images/redoc.png)
+![Swagger](images/swagger.png){width=600px}
+![Redoc](images/redoc.png){width=600px}
 
 ## Project Structure
 ```

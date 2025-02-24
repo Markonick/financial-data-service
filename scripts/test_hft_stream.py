@@ -55,8 +55,8 @@ async def simulate_hft_stream(batch_count: Optional[int] = None):
     try:
         while True:
             symbol = random.choice(REAL_SYMBOLS)
-            batch_size = random.randint(MIN_BATCH_SIZE, MIN_BATCH_SIZE)
-            batch_size = 10
+            batch_size = random.randint(MIN_BATCH_SIZE, MAX_BATCH_SIZE)
+            # batch_size = 10000
             values = generate_random_values(batch_size)
             batch_data = BatchData(symbol=symbol, values=values)
 
@@ -94,4 +94,4 @@ async def simulate_hft_stream(batch_count: Optional[int] = None):
 
 # Example usage
 if __name__ == "__main__":
-    asyncio.run(simulate_hft_stream(batch_count=1000000))
+    asyncio.run(simulate_hft_stream(batch_count=1000))

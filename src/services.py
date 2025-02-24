@@ -72,19 +72,15 @@ class RunningStats:
             logger.warning("Attempted to get stats with no values")
             return None
 
-        n = len(self.values)
-        avg = self.sum / n
-
-        # More numerically stable variance calculation
-        squared_diff_sum = sum((x - avg) ** 2 for x in self.values)
-        var = squared_diff_sum / n
+        # Convert deque to numpy array for calculations
+        values_array = np.array(self.values)
 
         return Stats(
             min=float(self.current_min),
             max=float(self.current_max),
             last=float(self.values[-1]),
-            avg=float(avg),
-            var=float(var),
+            avg=float(np.mean(values_array)),
+            var=float(np.var(values_array)),  # uses population variance by default
             values=len(self.values),
         )
 
