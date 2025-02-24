@@ -28,9 +28,6 @@ test-file:
 test-method:
 	poetry run pytest tests/$(file) -v -k $(method)
 
-lint:
-	poetry run ruff .
-
 lint-fix:
 	poetry run ruff check . --fix 
 

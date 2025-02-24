@@ -188,20 +188,42 @@ Maximum (10 symbols): ~4.5 GB
 
 ### Throughput
 
-*** add-batch ***
-- Batch Processing: ~50,000 for the first 5 test runs, then big batches with many requests
+**add-batch**
+- Batch Processing: 7&micro;s per get stats request for random sized windows from k=1...8, but 1 sample per batch costly (800&micro;s to 6ms)
 - As we increase the batch size, we can fit in more trades within a certain time window
 - Requests overhead penalty
 
-| <img src="images/batch_1_50000.png" width="300"/> | <img src="images/batch_10_5000.png" width="300"/> |
+| <img src="images/batch_1_1.png" width="300"/> | <img src="images/batch_1_1000.png" width="300"/> |
 |:---:|:---:|
-| batch-size: 1 / num of requests: 50000 | batch-size: 10 / num of requests: 5000 |
-| <img src="images/batch_100_500.png" width="300"/> | <img src="images/batch_1000_50.png" width="300"/> |
-| batch-size: 100 / num of requests: 500 | batch-size: 1000 / num of requests: 50 |
-| <img src="images/batch_10000_5.png" width="300"/> | <img src="images/batch_10000_1000.png" width="300"/> |
-| batch-size: 10000 / num of requests: 5 | batch-size: 10000 / num of requests: 1000 |
-| <img src="images/batch_rand_1000.png" width="300"/> | |
-| batch-size: random / num of requests: 1000 | |
+| batch-size: 1 / num of requests: 1 | batch-size: 1 / num of requests: 1000 |
+| <img src="images/batch_10000_1000.png" width="300"/> | <img src="images/batch_random_1000.png" width="300"/> |
+| batch-size: 1000 / num of requests: 1000 | batch-size: random / num of requests: 1000 |
+
+
+**stats**
+- Batch Processing: 7ms per stats request, 1000 async requests
+![Stats](images/stats_1000.png){width=300px}
+
+
+## Monitoring with Streamlit
+You have the ability to observe the stats and window sizes progression in Streamlit, which
+we spawn on default **localhost:8501**. To do so first make sure you have your server running and
+some batch requests been sent:
+
+```sh
+make run
+make batches
+```
+Then you can start monitoring:
+
+```sh
+make monitor-ui
+```
+
+then go [here](http://localhost:8501 "streamlit")
+
+and you should see something like this:
+![Streamlit](images/streamlit.png){width=1000px}
 
 ## API Endpoints
 - `POST /add_batch/`: Add a batch of trading data.

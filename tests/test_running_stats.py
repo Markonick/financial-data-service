@@ -14,7 +14,8 @@ def test_running_stats_initialization():
     assert stats.window_size == 3
     assert len(stats.values) == 0
     assert stats.sum == 0.0
-    assert stats.sum_squared == 0.0
+    assert stats.avg == 0.0
+    assert stats.M2 == 0.0
     assert stats.current_min == np.float16(np.inf)
     assert stats.current_max == np.float16(-np.inf)
 

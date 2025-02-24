@@ -39,7 +39,9 @@ def symbol_progress_pill(symbol: str, progress: float, current_size: int):
             align-items: center;
         ">
             <span style="font-size: 1.5em; margin-right: 1em;">{symbol}</span>
-            <span style="font-size: 0.8em;">{percentage:.1f}% ({current_size:,}/{MAX_WINDOW_SIZE:,})</span>
+            <span style="font-size: 0.8em;">
+            {percentage:.1f}% ({current_size:,}/{MAX_WINDOW_SIZE:,})
+            </span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -50,7 +52,8 @@ async def get_stats(client: httpx.AsyncClient, symbol: str, k: int):
     try:
         response = await client.get(f"http://localhost:8000/stats/{symbol}/{k}")
         return response.json() if response.status_code == 200 else None
-    except:
+    except httpx.HTTPStatusError as e:
+        print(f"HTTP error occurred: {e}")
         return None
 
 

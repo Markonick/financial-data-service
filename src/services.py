@@ -25,44 +25,49 @@ class RunningStats:
         Initialize RunningStats with a fixed window size.
         """
         self.window_size = window_size
-        self.values: deque[np.float32] = deque(maxlen=window_size)
-
-        # Running stats
-        self.sum: np.float32 = np.float32(0.0)
-        self.sum_squared: np.float32 = np.float32(0.0)
-        self.current_min: np.float32 = np.float32(np.inf)
-        self.current_max: np.float32 = np.float32(-np.inf)
+        self.values = deque(maxlen=window_size)
+        self.current_min = np.float32(float("inf"))
+        self.current_max = np.float32(float("-inf"))
+        self.sum = np.float32(0.0)
+        self.avg = np.float32(0.0)
+        self.M2 = np.float32(0.0)
         logger.debug(f"Initialized RunningStats with window_size={window_size}")
 
     def add(self, value: float) -> None:
-        """
-        Add a new value and update running statistics.
-        """
-        value32 = np.float32(value)
+        """Add a value to the running stats."""
+        value = np.float32(value)
+
         if len(self.values) == self.window_size:
-            oldest = self.values.popleft()
-            oldest32 = np.float32(oldest)
-            self.sum -= oldest32
-            self.sum_squared -= oldest32 * oldest32
-            logger.debug(f"Window full, removing oldest value: {oldest}")
+            old = self.values.popleft()
+            self.sum = self.sum - old
 
-            # If oldest was min/max, recalculate from window
-            if oldest == self.current_min or oldest == self.current_max:
-                self.current_min = np.float32(min(self.values))
-                self.current_max = np.float32(max(self.values))
+            # Update for sliding window
+            n = self.window_size
+            old_avg = self.avg
+            self.avg = self.avg + (value - old) / n
 
-        # Add new value
-        self.values.append(value32)
-        self.sum += value32
-        self.sum_squared += value32 * value32
+            # Update M2 by removing old value's contribution and adding new value's
+            self.M2 = (
+                self.M2
+                - (old - old_avg) * (old - self.avg)
+                + (value - old_avg) * (value - self.avg)
+            )
 
-        # Update min/max
-        if value32 < self.current_min:
-            logger.debug(f"New minimum value: {value32}")
-            self.current_min = value32
-        if value32 > self.current_max:
-            logger.debug(f"New maximum value: {value32}")
-            self.current_max = value32
+            # Update min and max if we just removed a value that was min or max
+            if old == self.current_min or old == self.current_max:
+                self.current_min = min(self.values)
+                self.current_max = max(self.values)
+        else:
+            # Welford's update for growing window
+            n = len(self.values)
+            delta = value - self.avg
+            self.avg = self.avg + delta / (n + 1)
+            self.M2 = self.M2 + delta * (value - self.avg)
+
+        self.current_min = min(self.current_min, value)
+        self.current_max = max(self.current_max, value)
+        self.sum = self.sum + value
+        self.values.append(value)
 
     def get_stats(self) -> Optional[Stats]:
         """
@@ -72,16 +77,16 @@ class RunningStats:
             logger.warning("Attempted to get stats with no values")
             return None
 
-        # Convert deque to numpy array for calculations
-        values_array = np.array(self.values)
+        n = len(self.values)
+        var = np.float32(self.M2) / np.float32(n) if n > 0 else np.float32(0)
 
         return Stats(
             min=float(self.current_min),
             max=float(self.current_max),
             last=float(self.values[-1]),
-            avg=float(np.mean(values_array)),
-            var=float(np.var(values_array)),  # uses population variance by default
-            values=len(self.values),
+            avg=float(self.avg),
+            var=float(var),
+            values=n,
         )
 
 

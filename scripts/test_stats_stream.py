@@ -42,11 +42,11 @@ async def simulate_stats_requests(num_requests: Optional[int] = None):
         while True:
             # Randomly select a symbol and k value
             symbol = random.choice(REAL_SYMBOLS)
-            k = random.randint(8, 8)
+            k = random.randint(1, 8)
 
             try:
                 start_time = time.perf_counter()
-                response = await client.get(f"http://localhost:8000/stats/{symbol}/{1}")
+                response = await client.get(f"http://localhost:8000/stats/{symbol}/{k}")
                 response.raise_for_status()
                 end_time = time.perf_counter()
 
@@ -67,7 +67,7 @@ async def simulate_stats_requests(num_requests: Optional[int] = None):
             except Exception as e:
                 print(f"Error querying stats for {symbol} (k={k}): {e!s}")
 
-            await asyncio.sleep(random.uniform(0.0001, 0.0001))
+            # await asyncio.sleep(random.uniform(0.0001, 0.0001))
 
             if num_requests is not None:
                 num_requests -= 1
