@@ -4,9 +4,10 @@ install:
 	poetry install
 
 shell:
-	pyenv install 3.13
-	pyenv virtualenv 3.13 neptune_3.13
+	-pyenv install 3.13 || true
+	-pyenv virtualenv 3.13 neptune_3.13 || true
 	pyenv local neptune_3.13
+
 
 test:
 	poetry run pytest

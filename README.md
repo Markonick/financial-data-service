@@ -10,25 +10,30 @@
 
 Before running the project, ensure you have the following installed on your system:
 
-### Required
 - Python 3.13 (`python3 --version`)
 - Poetry (`poetry --version`)
 - Make (`make --version`)
-  *** Optional:
+  **Optional:**
 - tmux
 - htop
   
-### System Libraries (Ubuntu/Debian)
-## Install
+### Installation
+1. Make sure the project is copied to a known folder on your PC
 
+2. Set up Python environment
 ```sh
-make install
+make shell # Creates a pyenv virtualenv with Python 3.13
+```
+3. Install dependencies
+```sh
+make install # Installs all required packages using Poetry
 ```
 
-## Usage
 
+### Running the Service
+1. Start the FastAPI server
 ```sh
-make run
+make run # Starts server on http://localhost:8000
 ```
 This will start the FastAPI app running off an asgi uvicorn server.
 However, we need to interact with it. In that respect, you can find some scripts in the scripts
@@ -36,6 +41,19 @@ folder.
 - The first one mocks asynchronous stream of high-frequency **/add_batch** POST requests.
 - The second one will start randomly sending GET requests to the **/stats** endpoint
 
+2. Send test data (in a new terminal)
+```sh
+make batches # Sends random trade data
+```
+3. Query statistics (in a new terminal)
+```sh
+make stats # Queries random statistics
+```
+4. View the monitoring UI (in a new terminal)
+```sh
+make monitor-ui # Opens Streamlit UI on http://localhost:8501
+```
+### Alternative: Start Everything at Once
 You can also use command
 ```sh
 make start-all
@@ -125,7 +143,7 @@ GET /stats/{k}   ◀── Stats    ◀── O(1) lookup  ◀── Pre-calcula
 #### SymbolManager
 Main service class managing trading data for multiple symbols.
 
-Time Complexity:
+**Time Complexity:**
 - add_batch: O(b * k) where:
   - b is the batch size (max 10000)
   - k is the number of window sizes (constant: 8)
@@ -133,14 +151,14 @@ Time Complexity:
 
 - get_stats: O(1) - constant time retrieval of pre-calculated stats
 
-Space Complexity:
+**Space Complexity:**
 - O(s * k * w) where:
   - s is number of symbols (max 10)
   - k is number of window sizes (constant: 8)
   - w is largest window size (10^8)
   Therefore, O(10 * 8 * 10^8) = O(8 * 10^9) in worst case
 
-Design Decisions:
+**Design Decisions:**
 1. Pre-calculate statistics for all window sizes on insertion
    - Trades more space for constant-time stats retrieval
    - Suitable for read-heavy workloads
@@ -157,23 +175,21 @@ Design Decisions:
 #### RunningStats
 Statistics calculator for a fixed-size window of values.
 
-Time Complexity:
+**Time Complexity:**
 - add: O(1) - constant time insertion and stats update using deque
 - get_stats: O(1) - constant time retrieval of pre-calculated stats
 
-Space Complexity:
+**Space Complexity:**
 - O(w) where w is the window size (stores only the last w values in deque)
 
-### System Constraints
+### System Constraints / Performance Characteristics
 - Maximum 10 unique symbols
 - Batch size limit: 10000 values
 - Window sizes: 10^k where k is 1-8
 - In-memory storage only
 - No concurrent requests for the same symbol
 
-## Performance Characteristics
-
-### Memory Usage (float32 values)
+**Memory Usage (float32 values)**
 Per Symbol Memory:
 - k=1: 10¹ values = 40 bytes
 - k=2: 10² values = 400 bytes
